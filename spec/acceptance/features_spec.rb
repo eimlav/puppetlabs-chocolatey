@@ -182,4 +182,3 @@ describe 'chocolateyfeature resource' do
     end
   end
 end
-

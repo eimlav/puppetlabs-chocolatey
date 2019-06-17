@@ -72,4 +72,3 @@ describe 'package resource' do
     end
   end
 end
-

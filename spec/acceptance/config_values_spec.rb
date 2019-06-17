@@ -229,4 +229,3 @@ describe 'chocolateyconfig' do
     end
   end
 end
-
