@@ -1,11 +1,10 @@
 require 'spec_helper_acceptance'
 
 describe 'chocolateysource resource' do
-
   context 'create resource' do
     include_context 'backup and reset config'
 
-    let(:pp_chocolateysource) do 
+    let(:pp_chocolateysource) do
       <<-MANIFEST
         chocolateysource {'chocolatey':
           ensure             => present,
@@ -25,7 +24,6 @@ describe 'chocolateysource resource' do
     end
 
     it 'sets the correct config' do
-      result = run_shell(config_content_command)
       run_shell(config_content_command, acceptable_exit_codes: [0]) do |result|
         expect(result.exit_code).to eq(0)
         expect(get_xml_value("//sources/source[@id='chocolatey']/@value", result.stdout).to_s).to match(%r{https:\/\/chocolatey.org\/api\/v2})
@@ -58,7 +56,7 @@ describe 'chocolateysource resource' do
       MANIFEST
     end
 
-    let(:pp_chocolateysource_changed) do 
+    let(:pp_chocolateysource_changed) do
       <<-MANIFEST
         chocolateysource {'chocolatey':
           ensure             => present,
@@ -79,7 +77,6 @@ describe 'chocolateysource resource' do
     end
 
     it 'sets the correct config' do
-      result = run_shell(config_content_command)
       run_shell(config_content_command, expect_failures: true) do |result|
         expect(result.exit_code).to eq(0)
         expect(get_xml_value("//sources/source[@id='chocolatey']/@value", result.stdout).to_s).to match(%r{c:\\packages})
@@ -97,7 +94,7 @@ describe 'chocolateysource resource' do
   context 'remove values from an existing resource' do
     include_context 'backup and reset config'
 
-    let(:pp_chocolateysource) do 
+    let(:pp_chocolateysource) do
       <<-MANIFEST
         chocolateysource {'chocolatey':
           ensure             => present,
@@ -112,7 +109,7 @@ describe 'chocolateysource resource' do
       MANIFEST
     end
 
-    let(:pp_chocolateysource_remove) do 
+    let(:pp_chocolateysource_remove) do
       <<-MANIFEST
         chocolateysource {'chocolatey':
           ensure   => present,
@@ -220,14 +217,14 @@ describe 'chocolateysource resource' do
         MANIFEST
       end
 
-      it 'raises an error' do  
+      it 'raises an error' do
         apply_manifest(pp_chocolateysource, expect_failures: true) do |result|
           expect(result.exit_code).to eq(1)
           expect(result.stderr).to match(%r{Error: Validation of Chocolateysource\[chocolatey\] failed: A non-empty location})
         end
       end
     end
-  
+
     context 'when invalid ensure' do
       let(:pp_chocolateysource) do
         <<-MANIFEST
@@ -245,7 +242,7 @@ describe 'chocolateysource resource' do
         end
       end
     end
-  
+
     context 'when password set and user not set' do
       let(:pp_chocolateysource) do
         <<-MANIFEST
@@ -264,7 +261,7 @@ describe 'chocolateysource resource' do
         end
       end
     end
-  
+
     context 'when user set and password not set' do
       let(:pp_chocolateysource) do
         <<-MANIFEST
@@ -275,8 +272,8 @@ describe 'chocolateysource resource' do
           }
         MANIFEST
       end
-      
-      it 'raises an error' do  
+
+      it 'raises an error' do
         apply_manifest(pp_chocolateysource, expect_failures: true) do |result|
           expect(result.exit_code).to eq(1)
           expect(result.stderr).to match(%r{Error: Validation of Chocolateysource\[chocolatey\] failed: If specifying user\/password, you must specify both values})

@@ -2,7 +2,6 @@ require 'spec_helper_acceptance'
 require 'pry'
 
 describe 'chocolateyfeature resource' do
-
   context 'disable a disabled chocolateyfeature' do
     include_context 'backup and reset config'
 
@@ -101,7 +100,7 @@ describe 'chocolateyfeature resource' do
     it 'applies manifest' do
       idempotent_apply(pp_chocolateyfeature_enabled)
     end
-      
+
     it 'enables chocolateyfeature' do
       run_shell(config_content_command, expect_failures: true) do |result|
         expect(result.exit_code).to eq(0)
@@ -154,10 +153,10 @@ describe 'chocolateyfeature resource' do
         }
       MANIFEST
     end
-    
+
     it 'raises error' do
-      apply_manifest(pp_chocolateyfeature, :expect_failures => true) do |result|
-        expect(result.exit_code).to_not eq(0)
+      apply_manifest(pp_chocolateyfeature, expect_failures: true) do |result|
+        expect(result.exit_code).not_to eq(0)
         expect(result.stderr).to match(%r{Feature 'idontexistfeature123123' not found})
       end
     end
@@ -175,8 +174,8 @@ describe 'chocolateyfeature resource' do
     end
 
     it 'raises error' do
-      apply_manifest(pp_chocolateyfeature, :expect_failures => true) do |result|
-        expect(result.exit_code).to_not eq(0)
+      apply_manifest(pp_chocolateyfeature, expect_failures: true) do |result|
+        expect(result.exit_code).not_to eq(0)
         expect(result.stderr).to match(%r{Error: Parameter ensure failed on Chocolateyfeature\[checksumFiles\]: Invalid value \"absent\"})
       end
     end

@@ -1,9 +1,9 @@
 require 'net/http'
 require 'nokogiri'
 
-Dir["./spec/support/**/*.rb"].sort.each { |f| require f }
+Dir['./spec/support/**/*.rb'].sort.each { |f| require f }
 
-CHOCOLATEY_LATEST_INFO_URL = "https://artifactory.delivery.puppetlabs.net/artifactory/api/nuget/choco-pipeline-tests/Packages()?$filter=((Id%20eq%20%27chocolatey%27)%20and%20(not%20IsPrerelease))%20and%20IsLatestVersion"
+CHOCOLATEY_LATEST_INFO_URL = 'https://artifactory.delivery.puppetlabs.net/artifactory/api/nuget/choco-pipeline-tests/Packages()?$filter=((Id%20eq%20%27chocolatey%27)%20and%20(not%20IsPrerelease))%20and%20IsLatestVersion'.freeze
 
 def encode_command(cmd)
   cmd = cmd.chars.to_a.join("\x00").chomp
@@ -11,17 +11,6 @@ def encode_command(cmd)
   # use strict_encode because linefeeds are not correctly handled in our model
   cmd = Base64.strict_encode64(cmd).chomp
   cmd
-end
-
-def get_latest_chocholatey_download_url
-  uri = URI.parse(CHOCOLATEY_LATEST_INFO_URL)
-
-  response = Net::HTTP.get_response(uri)
-  xml_str = Nokogiri::XML(response.body)
-
-  src_url = xml_str.css('//feed//content').attr('src')
-
-  return src_url
 end
 
 def install_chocolatey

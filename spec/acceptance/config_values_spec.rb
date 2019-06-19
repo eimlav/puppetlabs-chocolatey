@@ -1,9 +1,7 @@
 require 'spec_helper_acceptance'
 
 describe 'chocolateyconfig' do
-
   context 'create chocolateyconfig resource' do
-
     include_context 'backup and reset config'
 
     let(:pp_chocolateysource) do
@@ -27,7 +25,6 @@ describe 'chocolateyconfig' do
   end
 
   context 'add value to existing chocolateyconfig' do
-
     include_context 'backup and reset config'
 
     let(:pp_chocolateysource) do
@@ -38,7 +35,7 @@ describe 'chocolateyconfig' do
         }
       MANIFEST
     end
-    
+
     it 'applies manifest' do
       idempotent_apply(pp_chocolateysource)
     end
@@ -51,7 +48,6 @@ describe 'chocolateyconfig' do
   end
 
   context 'change config value on existing chocolateyconfig' do
-
     include_context 'backup and reset config'
 
     let(:pp_chocolateysource) do
@@ -92,7 +88,6 @@ describe 'chocolateyconfig' do
   end
 
   context "create chocolateyconfig containing 'password' in name" do
-
     include_context 'backup and reset config'
 
     let(:config_value) do
@@ -103,7 +98,7 @@ describe 'chocolateyconfig' do
       MANIFEST
 
       idempotent_apply(pp_chocolateysource_changed)
-      result = run_shell(config_content_command)      
+      result = run_shell(config_content_command)
       get_xml_value("//config/add[@key='proxyPassword']/@value", result.stdout).to_s
     end
 
@@ -127,7 +122,6 @@ describe 'chocolateyconfig' do
   end
 
   context 'create chocolateyconfig with no value set' do
-
     include_context 'backup and reset config'
 
     let(:pp_chocolateysource) do
@@ -147,7 +141,6 @@ describe 'chocolateyconfig' do
   end
 
   context "remove value fom chocolateyconfig containing 'password' in name" do
-
     include_context 'backup and reset config'
 
     let(:pp_chocolateysource) do
@@ -170,7 +163,7 @@ describe 'chocolateyconfig' do
       idempotent_apply(pp_chocolateysource)
     end
 
-    it 'sets config' do 
+    it 'sets config' do
       run_shell(config_content_command) do |result|
         expect(get_xml_value("//config/add[@key='proxyPassword']/@value", result.stdout).to_s).to match(%r{.+})
       end
@@ -182,13 +175,12 @@ describe 'chocolateyconfig' do
 
     it 'removes key from config' do
       run_shell(config_content_command) do |result|
-        expect(get_xml_value("//config/add[@key='proxyPassword']/@value", result.stdout).to_s).to_not match(%r{.+})
+        expect(get_xml_value("//config/add[@key='proxyPassword']/@value", result.stdout).to_s).not_to match(%r{.+})
       end
     end
   end
 
   context 'remove value from chocolateyconfig' do
-
     include_context 'backup and reset config'
 
     let(:pp_chocolateysource) do
@@ -212,7 +204,7 @@ describe 'chocolateyconfig' do
       idempotent_apply(pp_chocolateysource)
     end
 
-    it 'sets config' do 
+    it 'sets config' do
       run_shell(config_content_command) do |result|
         expect(get_xml_value("//config/add[@key='amadeupvalue']/@value", result.stdout).to_s).to match(%r{10})
       end
@@ -224,7 +216,7 @@ describe 'chocolateyconfig' do
 
     it 'removes key from config' do
       run_shell(config_content_command) do |result|
-        expect(get_xml_value("//config/add[@key='amadeupvalue']/@value", result.stdout).to_s).to_not match(%r{10})
+        expect(get_xml_value("//config/add[@key='amadeupvalue']/@value", result.stdout).to_s).not_to match(%r{10})
       end
     end
   end
