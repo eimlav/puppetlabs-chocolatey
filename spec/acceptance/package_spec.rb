@@ -1,115 +1,73 @@
 require 'spec_helper_acceptance'
 
-describe 'Chocolatey Package' do
+describe 'package resource' do
+  let(:package_name) { 'vlc' }
 
-  context 'MODULES-3037 Install a known good package via manifest and remove via manifest' do
-    package_name = 'vlc'
-    package_exe_path = %{C:\\'Program Files\\VideoLAN\\VLC\\vlc.exe'}
-    software_uninstall_command = %{cmd.exe /C C:\\'Program Files\\VideoLAN\\VLC\\uninstall.exe' /S}
+  context 'install a package and remove a package' do
+    let(:pp_chocolatey_package) do
+       <<-MANIFEST
+        package { "#{package_name}":
+          ensure   => present,
+          provider => chocolatey,
+          source   => 'https://artifactory.delivery.puppetlabs.net/artifactory/api/nuget/choco-pipeline-tests/'
+        }
+      MANIFEST
+    end
 
-    chocolatey_package_manifest = <<-PP
-      package { "#{package_name}":
-        ensure   => present,
-        provider => chocolatey,
-        source   => 'https://artifactory.delivery.puppetlabs.net/artifactory/api/nuget/choco-pipeline-tests/'
-      }
-    PP
+    let(:pp_chocolatey_package_removed) do 
+      <<-MANIFEST
+        package { "#{package_name}":
+          ensure   => absent,
+          provider => chocolatey,
+        }
+      MANIFEST
+    end
 
-    chocolatey_package_manifest_chng = <<-PP
-      package { "#{package_name}":
-        ensure   => absent,
-        provider => chocolatey,
-      }
-    PP
+    before(:all) do
+      @package_exe_path = %{C:\\'Program Files\\VideoLAN\\VLC\\vlc.exe'}
+      @software_uninstall_command = %{cmd.exe /C C:\\'Program Files\\VideoLAN\\VLC\\uninstall.exe' /S}
+
+      run_shell("powershell.exe -EncodedCommand #{encode_command("Test-Path #{@package_exe_path}")}", expect_failures: true)
+      run_shell("powershell.exe  -EncodedCommand #{encode_command("#{@software_uninstall_command}")}", expect_failures: true)
+    end
 
     after(:all) do
-      windows_agents.each do | agent |
-        on(agent, powershell("test-path #{package_exe_path}", {'EncodedCommand' => true}), :catch_errors => true) do | result |
-          on(agent, powershell(software_uninstall_command, {'EncodedCommand' => true}), :catch_errors => true) if result.stdout =~ /True/
+      run_shell("powershell.exe -EncodedCommand #{encode_command("Test-Path #{@package_exe_path}")}")
+      run_shell("powershell.exe  -EncodedCommand #{encode_command("#{@software_uninstall_command}")}")
+    end
+
+    context 'install package' do
+      it 'checks package is not installed' do
+        test_command = encode_command("Test-Path #{@package_exe_path}")
+        run_shell("powershell.exe -EncodedCommand #{test_command}") do |result|
+          expect(result.exit_code).to eq(0)
+          expect(result.stdout).to match(%r{False})
         end
+      end
+
+      it 'installs package' do
+        apply_manifest(pp_chocolatey_package) do |result|
+          expect(result.exit_code).to eq(0)
+          expect(result.stdout).to match(%r{Notice\: \/Stage\[main\]\/Main\/Package\[#{package_name}\]\/ensure\: created})
+        end
+        apply_manifest(pp_chocolatey_package)
       end
     end
 
-    windows_agents.each do | agent |
-
-      it 'Should verify the package is not installed.' do
-        on(agent, powershell("test-path #{package_exe_path}", {'EncodedCommand' => true}), :catch_errors => true) do | result |
-          assert_match(/False/i, result.output, "#{package_name} was present before application of manifest.")
+    context 'remove package' do
+      it 'checks package is installed' do
+        run_shell("Test-Path #{@package_exe_path}", catch_errors: true) do |result|
+          expect(result.exit_code).to eq(0)
+          expect(result.stdout).to match(%r{True})
         end
       end
-
-      it 'Should apply the manifest to install the package' do
-        execute_manifest_on(agent, chocolatey_package_manifest, :catch_failures => true) do | result |
-          assert_match(/Notice\: \/Stage\[main\]\/Main\/Package\[#{package_name}\]\/ensure\: created/, result.stdout, "stdout did not report package creation of #{package_name}")
+  
+      it 'uninstalls package' do
+        apply_manifest(pp_chocolatey_package_removed, catch_errors: true) do |result|
+          expect(result.exit_code).to eq(0)
+          expect(result.stdout).to match(%r{Stage\[main\]\/Main\/Package\[#{package_name}\]\/ensure\: removed})
         end
-      end
-
-      it "should have a valid version of #{package_name}" do
-        on(agent, powershell("test-path #{package_exe_path}", {'EncodedCommand' => true}), :catch_errors => true) do |result|
-          assert_match(/True/i, result.output, "#{package_name} was not present after application of manifest.")
-        end
-      end
-
-      it 'Should uninstall the package' do
-        execute_manifest_on(agent, chocolatey_package_manifest_chng, :catch_failures => true) do | result |
-          assert_match(/Stage\[main\]\/Main\/Package\[#{package_name}\]\/ensure\: removed/, result.stdout, "stdout did not report package removal of #{package_name}")
-        end
-      end
-    end
-  end
-
-  skip 'UTF-8 Not Suported At This Time - MODULES-3037 Install a known good package with utf-8 via manifest and remove via manifest' do
-    package_name = '竹ChocolateyGUIÖ'
-    package_exe_path = %{C:\\'Program Files (x86)\\ChocolateyGUI\\ChocolateyGUI.exe'}
-    software_uninstall_command = %{msiexec /x C:\\ProgramData\\chocolatey\\lib\\竹ChocolateyGUIÖ\\tools\\竹ChocolateyGUIÖ.msi /q}.force_encoding("ASCII-8BIT")
-
-    chocolatey_package_manifest = <<-PP
-      package { "#{package_name}":
-        ensure  => present,
-        provider => chocolatey,
-        source => 'https://artifactory.delivery.puppetlabs.net/artifactory/api/nuget/choco-pipeline-tests/'
-      }
-    PP
-
-    chocolatey_package_manifest_chng = <<-PP
-      package { "#{package_name}":
-        ensure   => absent,
-        provider => chocolatey,
-      }
-    PP
-
-    after(:all) do
-      windows_agents.each do | agent |
-        on(agent, powershell("test-path #{package_exe_path}", {'EncodedCommand' => true}), :catch_errors => true) do | result |
-          on(agent, powershell(software_uninstall_command, {'EncodedCommand' => true}), :catch_errors => true) if result.stdout =~ /True/
-        end
-      end
-    end
-
-    windows_agents.each do | agent |
-
-      it 'Should verify the package is not installed.' do
-        on(agent, powershell("test-path #{package_exe_path}", {'EncodedCommand' => true}), :catch_errors => true) do | result |
-          assert_match(/False/i, result.output, "#{package_name} was present before application of manifest.")
-        end
-      end
-
-      it 'Should apply the manifest to install the package' do
-        execute_manifest_on(agent, chocolatey_package_manifest, :catch_failures => true) do | result |
-          assert_match(/Notice\: \/Stage\[main\]\/Main\/Package\[#{package_name}\]\/ensure\: created/, result.stdout, "stdout did not report package creation of #{package_name}")
-        end
-      end
-
-      it "should have a valid version of #{package_name}" do
-        on(agent, powershell("test-path #{package_exe_path}", {'EncodedCommand' => true}), :catch_errors => true) do |result|
-          assert_match(/True/i, result.output, "#{package_name} was not present after application of manifest.")
-        end
-      end
-
-      it 'Should uninstall the package' do
-        execute_manifest_on(agent, chocolatey_package_manifest_chng, :catch_failures => true) do | result |
-          assert_match(/Stage\[main\]\/Main\/Package\[#{package_name}\]\/ensure\: removed/, result.stdout, "stdout did not report package removal of #{package_name}")
-        end
+        apply_manifest(pp_chocolatey_package_removed)
       end
     end
   end

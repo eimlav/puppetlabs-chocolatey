@@ -36,6 +36,7 @@ group :system_tests do
   gem "master_manipulator",                           require: false
   gem "puppet-blacksmith", '~> 3.4',                  require: false
   gem "beaker-windows", '~> 0.6',                     require: false
+  gem "puppet_litmus",                                require: false, platforms: [:ruby, :mswin, :mingw, :x64_mingw] if ENV['PUPPET_GEM_VERSION'].nil? or ENV['PUPPET_GEM_VERSION'] !~ %r{ 5}
 end
 
 puppet_version = ENV['PUPPET_GEM_VERSION']
