@@ -8,7 +8,28 @@
   required:
     - ---.project
 
+.gitlab-ci.yml:
+  unmanaged: true
+
+.travis.yml:
+  unmanaged: true
+
+.rubocop.yml:
+  default_configs:
+    inherit_from: .rubocop_todo.yml
+    require:
+    - rubocop-rspec
+
+appveyor.yml:
+  unmanaged: true
+
 Gemfile:
+  optional:
+    ':development':
+      - gem: 'github_changelog_generator'
+        git: 'https://github.com/skywinder/github-changelog-generator'
+        ref: '20ee04ba1234e9e83eb2ffb5056e23d641c7a018'
+        condition: "Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.2.2')"
   required:
     ':system_tests':
       - gem: 'puppet-module-posix-system-r#{minor_version}'
@@ -18,37 +39,17 @@ Gemfile:
           - mswin
           - mingw
           - x64_mingw
-      - gem: beaker-testmode_switcher
-        version: '~> 0.4'
-      - gem: master_manipulator
-      - gem: puppet-blacksmith
-        version: '~> 3.4'
-      - gem: beaker-windows
-        version: '~> 0.6'
-  optional:
-    ':development':
-      - gem: rototiller
-        version: '~> 1.0'
+      - gem: 'puppet_litmus'
+        platforms:
+          - ruby
+          - mswin
+          - mingw
+          - x64_mingw
+        condition: "ENV['PUPPET_GEM_VERSION'].nil? or ENV['PUPPET_GEM_VERSION'] !~ %r{ 5}"
 
-# For the moment don't do any rubocop checks.
-.rubocop.yml:
-  include_todos: true
-
-appveyor.yml:
-  matrix_extras:
-    - PUPPET_GEM_VERSION: ~> 6.0
-      RUBY_VERSION: 25
-      CHECK: parallel_spec
-    - PUPPET_GEM_VERSION: ~> 6.0
-      RUBY_VERSION: 25-x64
-      CHECK: parallel_spec
-
-spec/default_facts.yml:
-  unmanaged: true
-
-.gitlab-ci.yml:
-  delete: true
-
-# Rake file is heavily modified for Rototiller
 Rakefile:
-  unmanaged: true
+  use_litmus_tasks: true
+
+spec/spec_helper.rb:
+  mock_with: ':mocha'
+  coverage_report: true
