@@ -58,5 +58,9 @@
   ],
   "pdk-version": "1.10.0",
   "template-url": "https://github.com/puppetlabs/pdk-templates#master",
+<<<<<<< HEAD
   "template-ref": "heads/master-0-g7cf0403"
+=======
+  "template-ref": "heads/master-0-g7885b5e"
+>>>>>>> (FM-8194) Convert tests to litmus
 }
